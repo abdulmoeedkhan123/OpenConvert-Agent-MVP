@@ -1,0 +1,117 @@
+from __future__ import annotations
+import sys
+from pathlib import Path
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QListWidget, QFileDialog, QComboBox, QMessageBox, QProgressBar
+)
+
+from .engine import convert, supported_targets, ConversionError
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("OpenConvert Agent")
+        self.resize(720, 480)
+        self.files: list[Path] = []
+        root = QWidget()
+        layout = QVBoxLayout(root)
+        intro = QLabel("Local file conversion. Originals are preserved and outputs are never overwritten.")
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        buttons = QHBoxLayout()
+        add_button = QPushButton("Add files…")
+        add_button.clicked.connect(self.add_files)
+        remove_button = QPushButton("Remove selected")
+        remove_button.clicked.connect(self.remove_selected)
+        buttons.addWidget(add_button)
+        buttons.addWidget(remove_button)
+        layout.addLayout(buttons)
+
+        self.list_widget = QListWidget()
+        self.list_widget.setAcceptDrops(True)
+        self.list_widget.setToolTip("Use Add files to select files. Drag-and-drop can be enabled in a later UI iteration.")
+        layout.addWidget(self.list_widget)
+
+        target_row = QHBoxLayout()
+        target_row.addWidget(QLabel("Convert selected files to:"))
+        self.target = QComboBox()
+        self.target.addItems(["pdf", "png", "jpg", "webp", "bmp", "tiff"])
+        target_row.addWidget(self.target)
+        layout.addLayout(target_row)
+
+        self.progress = QProgressBar()
+        self.progress.setRange(0, 100)
+        self.progress.setValue(0)
+        layout.addWidget(self.progress)
+
+        self.status = QLabel("Ready")
+        layout.addWidget(self.status)
+
+        convert_button = QPushButton("Convert…")
+        convert_button.clicked.connect(self.convert_selected)
+        layout.addWidget(convert_button)
+        self.setCentralWidget(root)
+
+    def add_files(self):
+        paths, _ = QFileDialog.getOpenFileNames(self, "Choose files")
+        for raw in paths:
+            path = Path(raw).resolve()
+            if path not in self.files:
+                self.files.append(path)
+                self.list_widget.addItem(str(path))
+
+    def remove_selected(self):
+        indices = sorted({self.list_widget.row(item) for item in self.list_widget.selectedItems()}, reverse=True)
+        for index in indices:
+            self.files.pop(index)
+            self.list_widget.takeItem(index)
+
+    def convert_selected(self):
+        selected_indices = sorted({self.list_widget.row(item) for item in self.list_widget.selectedItems()})
+        chosen = [self.files[i] for i in selected_indices] if selected_indices else list(self.files)
+        if not chosen:
+            QMessageBox.information(self, "No files", "Add files first.")
+            return
+        target = self.target.currentText()
+        incompatible = [p.name for p in chosen if target not in supported_targets(p)]
+        if incompatible:
+            QMessageBox.warning(
+                self, "Unsupported conversion",
+                "The following files do not support this target in the MVP:\n\n" + "\n".join(incompatible)
+            )
+            return
+        confirm = QMessageBox.question(
+            self, "Confirm conversion",
+            f"Convert {len(chosen)} file(s) to {target.upper()}?\n\n"
+            "Originals will be preserved. Existing outputs will not be overwritten.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+
+        errors, successes = [], []
+        self.progress.setRange(0, len(chosen))
+        self.progress.setValue(0)
+        for index, path in enumerate(chosen, 1):
+            try:
+                out = convert(path, target)
+                successes.append(f"{path.name} → {out.name}")
+            except ConversionError as exc:
+                errors.append(f"{path.name}: {exc}")
+            self.progress.setValue(index)
+            QApplication.processEvents()
+
+        self.status.setText(f"Finished: {len(successes)} succeeded, {len(errors)} failed.")
+        summary = "\n".join(successes + ([""] if successes and errors else []) + errors)
+        QMessageBox.information(self, "Conversion results", summary or "No output.")
+
+def run_gui() -> int:
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    return app.exec()
