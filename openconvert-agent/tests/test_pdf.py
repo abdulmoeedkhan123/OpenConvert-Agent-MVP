@@ -14,6 +14,7 @@ from openconvert.engine import (
     merge_pdfs,
     split_pdf,
 )
+from openconvert.planner import deterministic_plan
 
 
 def make_pdf(path: Path, *texts: str) -> Path:
@@ -82,6 +83,35 @@ def test_pdf_text_exports_create_nonempty_files(tmp_path: Path, target: str):
     assert output.stat().st_size > 0
     if target == "txt":
         assert "Extractable report text" in output.read_text(encoding="utf-8")
+    elif target == "docx":
+        from docx import Document
+
+        assert "Extractable report text" in "\n".join(
+            paragraph.text for paragraph in Document(output).paragraphs
+        )
+    elif target == "xlsx":
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(output, read_only=True)
+        assert workbook["Page 1"]["A1"].value == "Extractable report text"
+        workbook.close()
+    else:
+        from pptx import Presentation
+
+        presentation = Presentation(output)
+        assert "Extractable report text" in "\n".join(
+            shape.text for shape in presentation.slides[0].shapes if shape.has_text_frame
+        )
+
+
+def test_planner_recognizes_pdf_to_docx(tmp_path: Path):
+    source = make_pdf(tmp_path / "report.pdf", "Extractable report text")
+
+    plan = deterministic_plan("convert this pdf to docx", [source])
+
+    assert plan["action"] == "convert"
+    assert plan["target"] == "docx"
+    assert plan["files"] == [str(source)]
 
 
 def test_scanned_pdf_without_text_has_clear_error(tmp_path: Path):
