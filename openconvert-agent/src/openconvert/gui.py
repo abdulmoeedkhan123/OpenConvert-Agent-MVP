@@ -51,11 +51,22 @@ class MainWindow(QMainWindow):
         target_row = QHBoxLayout()
         target_row.addWidget(QLabel("Convert selected files to:"))
         self.target = QComboBox()
-        self.target.addItems([
-            "pdf", "png", "jpg", "jpeg", "webp", "bmp", "tiff",
-            "docx", "xlsx", "pptx", "txt",
-            "merge-pdf", "split-pdf", "compress-pdf",
-        ])
+        for label, target in [
+            ("PDF (combine images / convert documents)", "pdf"),
+            ("PNG", "png"),
+            ("JPEG", "jpg"),
+            ("WebP", "webp"),
+            ("BMP", "bmp"),
+            ("TIFF", "tiff"),
+            ("Word document (DOCX)", "docx"),
+            ("Excel workbook (XLSX)", "xlsx"),
+            ("PowerPoint presentation (PPTX)", "pptx"),
+            ("Plain text (TXT)", "txt"),
+            ("Merge PDF files", "merge-pdf"),
+            ("Split PDF into pages", "split-pdf"),
+            ("Compress PDF", "compress-pdf"),
+        ]:
+            self.target.addItem(label, target)
         target_row.addWidget(self.target)
         layout.addLayout(target_row)
 
@@ -92,7 +103,7 @@ class MainWindow(QMainWindow):
         if not chosen:
             QMessageBox.information(self, "No files", "Add files first.")
             return
-        target = self.target.currentText()
+        target = self.target.currentData()
         if target == "merge-pdf":
             if len(chosen) < 2 or any(path.suffix.lower() not in PDF_EXTENSIONS for path in chosen):
                 QMessageBox.warning(self, "Select PDFs", "Choose at least two PDF files to merge.")
