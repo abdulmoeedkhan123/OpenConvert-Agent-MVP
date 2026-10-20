@@ -3,7 +3,8 @@
 A local-first, open-source file conversion assistant for macOS. The MVP includes:
 - A small desktop UI (PySide6) for selecting files and target formats.
 - A safe conversion engine for common image conversions (Pillow).
-- Optional document-to-PDF conversion using a locally installed LibreOffice.
+- PDF-to-image conversion, image-to-PDF, PDF merge/split/compression, and local PDF text export to DOCX, XLSX, PPTX, or TXT.
+- Optional office/document-to-PDF conversion using a locally installed LibreOffice.
 - A command-line interface suitable for macOS Finder Quick Actions.
 - An optional Ollama-backed intent helper that only proposes a supported conversion; it never executes arbitrary commands.
 
@@ -15,16 +16,18 @@ A local-first, open-source file conversion assistant for macOS. The MVP includes
 - Only explicitly supported conversion recipes are available.
 
 ## MVP support
-- Images: PNG, JPEG, WEBP, BMP, TIFF (Pillow-supported formats).
-- Documents to PDF: common office documents supported by the local LibreOffice installation.
+- Images: PNG, JPEG, WEBP, BMP, TIFF, and GIF input (Pillow-supported formats).
+- Images to PDF: convert one image or combine selected images in order into one PDF.
+- PDFs: export pages to PNG/JPEG, extract selectable text to DOCX/XLSX/PPTX/TXT, merge, split into single-page files, and optimize by recompressing streams.
+- Documents to PDF: common office, spreadsheet, presentation, and text formats supported by the local LibreOffice installation.
 - More formats should be added as explicit, tested recipes rather than arbitrary extension changes.
 
 ## Requirements
 - macOS 13+ recommended
 - Python 3.11+
-- For image conversion: Pillow
+- For image and PDF conversions: Pillow, PyMuPDF, python-docx, openpyxl, python-pptx
 - For desktop UI: PySide6
-- For DOC/DOCX/ODT/RTF/TXT/HTML-to-PDF: LibreOffice installed locally and `soffice` available on PATH
+- For office/document-to-PDF: LibreOffice installed locally and `soffice` available on PATH
 - Optional AI: Ollama running locally, with a model pulled (for example `llama3.2:3b`)
 
 ## Quick start
@@ -84,6 +87,20 @@ Convert a document to PDF (requires LibreOffice):
 openconvert convert ./report.docx --to pdf
 ```
 
+Convert a PDF to images or editable text formats:
+```bash
+openconvert convert ./report.pdf --to png
+openconvert convert ./report.pdf --to docx
+openconvert convert ./report.pdf --to xlsx
+```
+
+Merge, split, or optimize PDFs:
+```bash
+openconvert merge-pdf ./first.pdf ./second.pdf
+openconvert split-pdf ./report.pdf
+openconvert compress-pdf ./report.pdf
+```
+
 Ask the optional local intent helper:
 ```bash
 openconvert plan "convert photo.png to webp"
@@ -105,6 +122,7 @@ For a production release, package this as a signed/notarized app and provide a n
 - Do not run conversion tools on files from privileged locations without user intent.
 - Conversion subprocesses use argument arrays (not shell strings), timeouts, and a restricted output directory.
 - This MVP does not recursively scan folders or delete source files.
+- PDF-to-Office exports extract selectable text and do not preserve the original page layout; scanned PDFs need OCR, which is not included. PDF recompression may not reduce every file's size.
 - LibreOffice and other external tools have their own security and licensing considerations.
 - Review all dependency licenses and packaging obligations before redistribution.
 

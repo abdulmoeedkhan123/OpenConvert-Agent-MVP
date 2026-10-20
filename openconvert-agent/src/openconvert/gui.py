@@ -97,11 +97,15 @@ class MainWindow(QMainWindow):
             if len(chosen) < 2 or any(path.suffix.lower() not in PDF_EXTENSIONS for path in chosen):
                 QMessageBox.warning(self, "Select PDFs", "Choose at least two PDF files to merge.")
                 return
+            if not self._confirm_pdf_action("Merge PDFs", f"Merge {len(chosen)} selected PDFs?"):
+                return
             self._run_pdf_action("Merge PDFs", lambda: [merge_pdfs(chosen)])
             return
         if target == "split-pdf":
             if any(path.suffix.lower() not in PDF_EXTENSIONS for path in chosen):
                 QMessageBox.warning(self, "Select PDFs", "Choose PDF files to split.")
+                return
+            if not self._confirm_pdf_action("Split PDFs", f"Split {len(chosen)} PDF file(s) into pages?"):
                 return
             self._run_pdf_action(
                 "Split PDFs", lambda: [output for path in chosen for output in split_pdf(path)]
@@ -111,6 +115,8 @@ class MainWindow(QMainWindow):
             if any(path.suffix.lower() not in PDF_EXTENSIONS for path in chosen):
                 QMessageBox.warning(self, "Select PDFs", "Choose PDF files to compress.")
                 return
+            if not self._confirm_pdf_action("Compress PDFs", f"Compress {len(chosen)} selected PDFs?"):
+                return
             self._run_pdf_action(
                 "Compress PDFs", lambda: [compress_pdf(path) for path in chosen]
             )
@@ -118,6 +124,10 @@ class MainWindow(QMainWindow):
         if target == "pdf" and len(chosen) > 1 and all(
             path.suffix.lower() in IMAGE_EXTENSIONS for path in chosen
         ):
+            if not self._confirm_pdf_action(
+                "Create PDF", f"Combine {len(chosen)} selected images into one PDF?"
+            ):
+                return
             self._run_pdf_action(
                 "Create PDF", lambda: [convert_images_to_pdf(chosen)]
             )
@@ -165,6 +175,14 @@ class MainWindow(QMainWindow):
             return
         self.status.setText(f"Finished: {len(outputs)} output file(s) created.")
         QMessageBox.information(self, title, "\n".join(str(path) for path in outputs))
+
+    def _confirm_pdf_action(self, title, message):
+        return QMessageBox.question(
+            self, title,
+            message + "\n\nOriginals will be preserved. Existing outputs will not be overwritten.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel,
+        ) == QMessageBox.StandardButton.Yes
 
 def run_gui() -> int:
     if os.environ.get("QT_QPA_PLATFORM") == "offscreen":
