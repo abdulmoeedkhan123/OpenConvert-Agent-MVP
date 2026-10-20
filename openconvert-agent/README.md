@@ -37,6 +37,21 @@ openconvert --help
 openconvert gui
 ```
 
+### Desktop launcher
+From the repo root, you can also launch the desktop app with the bundled scripts:
+```bash
+chmod +x desktop/openconvert-launcher.sh
+./desktop/openconvert-launcher.sh
+```
+
+To install a desktop entry for your Linux session:
+```bash
+chmod +x desktop/install_desktop_entry.sh
+./desktop/install_desktop_entry.sh
+```
+
+This creates a `.desktop` shortcut under `~/.local/share/applications` that launches the app from the project directory.
+
 Convert an image:
 ```bash
 openconvert convert ./photo.png --to webp
@@ -79,6 +94,11 @@ src/openconvert/
   engine.py
   planner.py
   gui.py
+desktop/
+  openconvert-launcher.sh
+  openconvert-agent.desktop
+  install_desktop_entry.sh
+  uninstall_desktop_entry.sh
 macos/
   finder_quick_action.sh
   README.md

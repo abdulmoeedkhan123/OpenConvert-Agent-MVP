@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=OpenConvert Agent
+Comment=Local-first file conversion assistant
+Exec=/workspaces/OpenConvert-Agent-MVP/openconvert-agent/desktop/openconvert-launcher.sh
+Path=/workspaces/OpenConvert-Agent-MVP/openconvert-agent
+Terminal=false
+Icon=applications-graphics
+Categories=Utility;Graphics;Office;
+StartupNotify=true
