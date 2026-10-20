@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
         target_row = QHBoxLayout()
         target_row.addWidget(QLabel("Convert selected files to:"))
         self.target = QComboBox()
-        self.target.addItems(["pdf", "png", "jpg", "webp", "bmp", "tiff"])
+        self.target.addItems(["pdf", "png", "jpg", "jpeg", "webp", "bmp", "tiff"])
         target_row.addWidget(self.target)
         layout.addLayout(target_row)
 

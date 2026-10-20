@@ -96,7 +96,6 @@ def convert_to_pdf(source: Path, output_dir: Path | None = None, timeout: int = 
     output_dir = (output_dir or source.parent).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     expected = output_dir / f"{source.stem}.pdf"
-    output = unique_output_path(expected)
 
     # Convert into a private temporary directory, then move into a non-overwriting final path.
     import tempfile
@@ -120,8 +119,7 @@ def convert_to_pdf(source: Path, output_dir: Path | None = None, timeout: int = 
         if result.returncode != 0 or not generated.is_file() or generated.stat().st_size == 0:
             detail = (result.stderr or result.stdout or "Unknown LibreOffice error").strip()
             raise ConversionError(f"Document conversion failed: {detail}")
-        # unique_output_path was checked before conversion; re-check just before commit.
-        output = unique_output_path(output)
+        output = unique_output_path(expected)
         shutil.move(str(generated), str(output))
 
     return output
@@ -130,7 +128,7 @@ def supported_targets(source: Path) -> list[str]:
     """Return targets that this MVP can handle for a given source."""
     suffix = source.suffix.lower()
     if suffix in {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".gif"}:
-        return ["png", "jpg", "webp", "bmp", "tiff"]
+        return ["png", "jpg", "jpeg", "webp", "bmp", "tiff"]
     if suffix in DOCUMENT_EXTENSIONS:
         return ["pdf"]
     return []
