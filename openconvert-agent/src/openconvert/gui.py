@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 import sys
 from pathlib import Path
 
@@ -111,6 +112,8 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Conversion results", summary or "No output.")
 
 def run_gui() -> int:
+    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
