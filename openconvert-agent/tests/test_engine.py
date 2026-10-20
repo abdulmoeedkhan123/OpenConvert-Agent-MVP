@@ -32,3 +32,8 @@ def test_unsupported_image_target(tmp_path: Path):
 
 def test_supported_targets_for_document():
     assert supported_targets(Path("report.docx")) == ["pdf"]
+
+
+def test_supported_targets_include_jpeg_for_images():
+    assert "jpeg" in supported_targets(Path("sample.jpg"))
+    assert "jpeg" in supported_targets(Path("sample.jpeg"))
