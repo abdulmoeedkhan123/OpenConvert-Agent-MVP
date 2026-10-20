@@ -10,13 +10,16 @@ from pathlib import Path
 from .engine import supported_targets
 
 ALLOWED_ACTIONS = {"convert"}
+SUPPORTED_INTENT_TARGETS = {
+    "png", "jpg", "jpeg", "webp", "bmp", "tiff", "pdf", "docx", "xlsx", "pptx", "txt"
+}
 DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 
 def deterministic_plan(prompt: str, known_files: list[Path]) -> dict:
     """Small no-AI fallback for simple requests."""
     lowered = prompt.lower()
     target = None
-    for candidate in ("webp", "png", "jpeg", "jpg", "bmp", "tiff", "pdf"):
+    for candidate in ("webp", "png", "jpeg", "jpg", "bmp", "tiff", "docx", "xlsx", "pptx", "txt", "pdf"):
         if re.search(rf"\b{re.escape(candidate)}\b", lowered):
             target = candidate
             break
@@ -41,7 +44,7 @@ def ollama_plan(prompt: str, known_files: list[Path], model: str = "llama3.2:3b"
 You are an intent parser for a local file converter. Do not execute anything.
 Return ONLY JSON with keys action, target, file_indices, explanation.
 action must be one of convert or clarify.
-target must be one of png,jpg,webp,bmp,tiff,pdf or empty.
+target must be one of png,jpg,webp,bmp,tiff,pdf,docx,xlsx,pptx,txt or empty.
 file_indices must be a list of integers referring to this numbered list:
 {json.dumps(allowed_files, ensure_ascii=False)}
 Only choose a target supported by the listed file type; if unclear, use clarify.
@@ -61,7 +64,7 @@ User request: {prompt}
     indices = parsed.get("file_indices", [])
     if action not in ALLOWED_ACTIONS | {"clarify"}:
         return {"action": "clarify", "message": "The local model returned an unsupported action."}
-    if action != "convert" or target not in {"png", "jpg", "webp", "bmp", "tiff", "pdf"}:
+    if action != "convert" or target not in SUPPORTED_INTENT_TARGETS:
         return {"action": "clarify", "message": str(parsed.get("explanation", "Please clarify the target format."))}
     if not isinstance(indices, list) or any(not isinstance(i, int) or i < 0 or i >= len(allowed_files) for i in indices):
         return {"action": "clarify", "message": "The local model returned invalid file references."}
