@@ -12,7 +12,10 @@ from PySide6.QtWidgets import (
     QPushButton, QListWidget, QFileDialog, QComboBox, QMessageBox, QProgressBar
 )
 
-from .engine import convert, supported_targets, ConversionError
+from .engine import (
+    IMAGE_EXTENSIONS, PDF_EXTENSIONS, compress_pdf, convert, convert_images_to_pdf,
+    merge_pdfs, split_pdf, supported_targets, ConversionError,
+)
 
 def _qt_message_handler(message_type, context, message):
     if message == "This plugin does not support propagateSizeHints()":
@@ -48,7 +51,11 @@ class MainWindow(QMainWindow):
         target_row = QHBoxLayout()
         target_row.addWidget(QLabel("Convert selected files to:"))
         self.target = QComboBox()
-        self.target.addItems(["pdf", "png", "jpg", "jpeg", "webp", "bmp", "tiff"])
+        self.target.addItems([
+            "pdf", "png", "jpg", "jpeg", "webp", "bmp", "tiff",
+            "docx", "xlsx", "pptx", "txt",
+            "merge-pdf", "split-pdf", "compress-pdf",
+        ])
         target_row.addWidget(self.target)
         layout.addLayout(target_row)
 
@@ -86,6 +93,35 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "No files", "Add files first.")
             return
         target = self.target.currentText()
+        if target == "merge-pdf":
+            if len(chosen) < 2 or any(path.suffix.lower() not in PDF_EXTENSIONS for path in chosen):
+                QMessageBox.warning(self, "Select PDFs", "Choose at least two PDF files to merge.")
+                return
+            self._run_pdf_action("Merge PDFs", lambda: [merge_pdfs(chosen)])
+            return
+        if target == "split-pdf":
+            if any(path.suffix.lower() not in PDF_EXTENSIONS for path in chosen):
+                QMessageBox.warning(self, "Select PDFs", "Choose PDF files to split.")
+                return
+            self._run_pdf_action(
+                "Split PDFs", lambda: [output for path in chosen for output in split_pdf(path)]
+            )
+            return
+        if target == "compress-pdf":
+            if any(path.suffix.lower() not in PDF_EXTENSIONS for path in chosen):
+                QMessageBox.warning(self, "Select PDFs", "Choose PDF files to compress.")
+                return
+            self._run_pdf_action(
+                "Compress PDFs", lambda: [compress_pdf(path) for path in chosen]
+            )
+            return
+        if target == "pdf" and len(chosen) > 1 and all(
+            path.suffix.lower() in IMAGE_EXTENSIONS for path in chosen
+        ):
+            self._run_pdf_action(
+                "Create PDF", lambda: [convert_images_to_pdf(chosen)]
+            )
+            return
         incompatible = [p.name for p in chosen if target not in supported_targets(p)]
         if incompatible:
             QMessageBox.warning(
@@ -108,8 +144,10 @@ class MainWindow(QMainWindow):
         self.progress.setValue(0)
         for index, path in enumerate(chosen, 1):
             try:
-                out = convert(path, target)
-                successes.append(f"{path.name} → {out.name}")
+                outputs = convert(path, target)
+                if not isinstance(outputs, list):
+                    outputs = [outputs]
+                successes.extend(f"{path.name} → {out.name}" for out in outputs)
             except ConversionError as exc:
                 errors.append(f"{path.name}: {exc}")
             self.progress.setValue(index)
@@ -118,6 +156,15 @@ class MainWindow(QMainWindow):
         self.status.setText(f"Finished: {len(successes)} succeeded, {len(errors)} failed.")
         summary = "\n".join(successes + ([""] if successes and errors else []) + errors)
         QMessageBox.information(self, "Conversion results", summary or "No output.")
+
+    def _run_pdf_action(self, title, action):
+        try:
+            outputs = action()
+        except ConversionError as exc:
+            QMessageBox.warning(self, title, str(exc))
+            return
+        self.status.setText(f"Finished: {len(outputs)} output file(s) created.")
+        QMessageBox.information(self, title, "\n".join(str(path) for path in outputs))
 
 def run_gui() -> int:
     if os.environ.get("QT_QPA_PLATFORM") == "offscreen":

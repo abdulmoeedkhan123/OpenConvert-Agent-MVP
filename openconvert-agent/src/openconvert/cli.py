@@ -3,7 +3,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .engine import convert, supported_targets, ConversionError
+from .engine import convert, merge_pdfs, split_pdf, compress_pdf, ConversionError
 from .planner import deterministic_plan, ollama_plan
 
 def main() -> int:
@@ -14,6 +14,18 @@ def main() -> int:
     c.add_argument("files", nargs="+", type=Path)
     c.add_argument("--to", required=True, help="Target format, e.g. webp or pdf")
     c.add_argument("--output-dir", type=Path, default=None)
+
+    m = sub.add_parser("merge-pdf", help="Merge two or more PDF files")
+    m.add_argument("files", nargs="+", type=Path)
+    m.add_argument("--output-dir", type=Path, default=None)
+
+    s = sub.add_parser("split-pdf", help="Split a PDF into one file per page")
+    s.add_argument("file", type=Path)
+    s.add_argument("--output-dir", type=Path, default=None)
+
+    z = sub.add_parser("compress-pdf", help="Compress a PDF locally")
+    z.add_argument("file", type=Path)
+    z.add_argument("--output-dir", type=Path, default=None)
 
     p = sub.add_parser("plan", help="Propose a conversion from natural language")
     p.add_argument("prompt")
@@ -29,11 +41,38 @@ def main() -> int:
         for source in args.files:
             try:
                 output = convert(source, args.to, args.output_dir)
-                print(f"OK\t{source}\t{output}")
+                outputs = output if isinstance(output, list) else [output]
+                for path in outputs:
+                    print(f"OK\t{source}\t{path}")
             except ConversionError as exc:
                 failed = True
                 print(f"ERROR\t{source}\t{exc}", file=sys.stderr)
         return 1 if failed else 0
+
+    if args.command == "merge-pdf":
+        try:
+            print(f"OK\t{merge_pdfs(args.files, args.output_dir)}")
+            return 0
+        except ConversionError as exc:
+            print(f"ERROR\t{exc}", file=sys.stderr)
+            return 1
+
+    if args.command == "split-pdf":
+        try:
+            for output in split_pdf(args.file, args.output_dir):
+                print(f"OK\t{output}")
+            return 0
+        except ConversionError as exc:
+            print(f"ERROR\t{exc}", file=sys.stderr)
+            return 1
+
+    if args.command == "compress-pdf":
+        try:
+            print(f"OK\t{compress_pdf(args.file, args.output_dir)}")
+            return 0
+        except ConversionError as exc:
+            print(f"ERROR\t{exc}", file=sys.stderr)
+            return 1
 
     if args.command == "plan":
         paths = [p.expanduser().resolve() for p in args.file]
