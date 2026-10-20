@@ -6,13 +6,18 @@ from pathlib import Path
 if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, qInstallMessageHandler
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QListWidget, QFileDialog, QComboBox, QMessageBox, QProgressBar
 )
 
 from .engine import convert, supported_targets, ConversionError
+
+def _qt_message_handler(message_type, context, message):
+    if message == "This plugin does not support propagateSizeHints()":
+        return
+    sys.stderr.write(f"Qt {message_type.name}: {message}\n")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -115,6 +120,8 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Conversion results", summary or "No output.")
 
 def run_gui() -> int:
+    if os.environ.get("QT_QPA_PLATFORM") == "offscreen":
+        qInstallMessageHandler(_qt_message_handler)
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
