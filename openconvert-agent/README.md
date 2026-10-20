@@ -77,6 +77,11 @@ A minimal browser extension wrapper is available under `extension/` for a launch
 
 See `extension/README.md` for loading instructions in Chrome/Edge.
 
+### Conversion samples
+Ready-to-use sample images, PDFs, and office documents are in `sample-files/`.
+See `sample-files/README.md` for what to select for each conversion and how to
+regenerate the complete set.
+
 Convert an image:
 ```bash
 openconvert convert ./photo.png --to webp

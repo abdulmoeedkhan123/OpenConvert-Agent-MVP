@@ -1,0 +1,2 @@
+OpenConvert text sample
+This file tests conversion to PDF.
