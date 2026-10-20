@@ -123,6 +123,7 @@ For a production release, package this as a signed/notarized app and provide a n
 - Conversion subprocesses use argument arrays (not shell strings), timeouts, and a restricted output directory.
 - This MVP does not recursively scan folders or delete source files.
 - PDF-to-Office exports extract selectable text and do not preserve the original page layout; scanned PDFs need OCR, which is not included. PDF recompression may not reduce every file's size.
+- PyMuPDF is licensed under AGPL-3.0 or a commercial license; review its terms before distributing this application.
 - LibreOffice and other external tools have their own security and licensing considerations.
 - Review all dependency licenses and packaging obligations before redistribution.
 

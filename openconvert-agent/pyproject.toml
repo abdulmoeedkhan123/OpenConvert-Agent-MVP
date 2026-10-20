@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [{name = "OpenConvert contributors"}]
 dependencies = [
   "Pillow>=10.0.0",
-  "PyMuPDF>=1.24.0",
+  "PyMuPDF>=1.24.0,<2",
   "python-docx>=1.1.0",
   "openpyxl>=3.1.0",
   "python-pptx>=1.0.0",
