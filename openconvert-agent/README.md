@@ -52,6 +52,28 @@ chmod +x desktop/install_desktop_entry.sh
 
 This creates a `.desktop` shortcut under `~/.local/share/applications` that launches the app from the project directory.
 
+To build a downloadable Linux desktop bundle:
+```bash
+chmod +x desktop/build_linux_bundle.sh
+./desktop/build_linux_bundle.sh
+```
+
+This produces a zip archive in `dist/openconvert-agent-desktop.zip`.
+
+### macOS bundle scaffold
+A minimal macOS `.app` bundle is included under `macos/OpenConvert Agent.app` for local app-style launching.
+
+```bash
+open "macos/OpenConvert Agent.app"
+```
+
+This is a lightweight launcher scaffold and is not a notarized shipping build.
+
+### Browser extension wrapper
+A minimal browser extension wrapper is available under `extension/` for a launcher helper experience.
+
+See `extension/README.md` for loading instructions in Chrome/Edge.
+
 Convert an image:
 ```bash
 openconvert convert ./photo.png --to webp
@@ -99,9 +121,20 @@ desktop/
   openconvert-agent.desktop
   install_desktop_entry.sh
   uninstall_desktop_entry.sh
+  build_linux_bundle.sh
+extension/
+  manifest.json
+  popup.html
+  popup.js
+  README.md
 macos/
   finder_quick_action.sh
   README.md
+  OpenConvert Agent.app/
+    Contents/
+      Info.plist
+      MacOS/
+        openconvert-launcher
 tests/
   test_engine.py
 ```

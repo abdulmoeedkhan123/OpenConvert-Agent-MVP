@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenConvert Agent</title>
+    <style>
+      body {
+        min-width: 320px;
+        font-family: Arial, sans-serif;
+        padding: 16px;
+        margin: 0;
+        background: #f7f7f7;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 12px;
+      }
+      p {
+        color: #333;
+        line-height: 1.5;
+      }
+      button {
+        width: 100%;
+        margin-top: 8px;
+        padding: 10px;
+        border: none;
+        background: #1e88e5;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OpenConvert Agent</h1>
+    <p>This browser extension is a lightweight wrapper around the desktop app.</p>
+    <p>Install the desktop app first, then use this helper to open the local launcher documentation.</p>
+    <button id="open-docs">Open install guide</button>
+    <button id="open-app" class="secondary">Open desktop launcher</button>
+    <script src="popup.js"></script>
+  </body>
+</html>
